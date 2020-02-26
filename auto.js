@@ -12,13 +12,12 @@ client.once('ready', () => {
 var userList;
 store.load("users", function(err, json) {
     if (err) {
-        console.error("Problem loading user list:", err);
+        // Initialize for the first time
         var users = {
             id: "users",
             users: []
         }
 
-        // Initialize for the first time
         store.add(users, function(err) {
             if (err) {
                 console.error("Problem creating user storage:", err);
