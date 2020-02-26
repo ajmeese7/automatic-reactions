@@ -71,16 +71,22 @@ client.on('message', message => {
                 if (err) {
                     console.error("Problem loading user list:", err);
                 } else {
-                    currentUserList = json.users;
-                    currentUserList.push(mentionedUser);
+                    var index = userList.indexOf(mentionedUser);
+     
+                    if (index < 0) {
+                        currentUserList = json.users;
+                        currentUserList.push(mentionedUser);
 
-                    // To make it wait until the dat has been retrieved
-                    updateUserList(currentUserList);
+                        // To make it wait until the data has been retrieved
+                        updateUserList(currentUserList);
+                    } else {
+                        console.log("That user is already on the reaction list!");
+                    }
                 }
             });
         } else {
             // Last message sent; user not specified
-            console.log("Specify a user to add to list!");
+            console.log("Specify a user to add to the reaction list!");
         }
     } else if (command == "remove") {
         var mentionedUser = getMentionedUser(message);
