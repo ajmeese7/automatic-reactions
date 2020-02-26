@@ -1,0 +1,9 @@
+# Node
+node_modules/
+package-lock\.json
+
+# Personal information
+config\.json
+
+# User's saved commands
+/store

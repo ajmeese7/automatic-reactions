@@ -1,0 +1,17 @@
+{
+  "name": "automatic-reactions",
+  "version": "1.0.0",
+  "description": "Discord react to every message a user sends.",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ajmeese7/automatic-reactions"
+  },
+  "main": "auto.js",
+  "author": "Aaron Meese",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^11.5.1",
+    "json-fs-store": "^1.0.1",
+    "node-persist": "2.1.0"
+  }
+}
