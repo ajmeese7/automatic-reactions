@@ -119,6 +119,10 @@ client.on('message', message => {
             // Last message sent; user not specified
             console.log("Specify a user to remove from the reaction list!");
         }
+    } else if (command == "clear") {
+        var users = [];
+        updateUserList(users);
+        message.member.lastMessage.delete().catch(console.error)
     }
 });
 
