@@ -60,16 +60,7 @@ client.on('message', message => {
     });
 
     if (command == "add") {
-        // TODO: Abstract into function since code is repeated
-        var mentionedUser;
-
-        // Gets required user before message deletion
-        if (message.mentions.users.first()) {
-            mentionedUser = message.mentions.users.first().id;
-        } else {
-            console.log("This user is not valid! Exiting function...");
-            return;
-        }
+        var mentionedUser = getMentionedUser(message);
 
         // Deletes the command message
         message.member.lastMessage.delete().catch(console.error);
@@ -92,15 +83,7 @@ client.on('message', message => {
             console.log("Specify a user to add to list!");
         }
     } else if (command == "remove") {
-        var mentionedUser;
-
-        // Gets required user before message deletion
-        if (message.mentions.users.first()) {
-            mentionedUser = message.mentions.users.first().id;
-        } else {
-            console.log("This user is not valid! Exiting function...");
-            return;
-        }
+        var mentionedUser = getMentionedUser(message);
 
         // Deletes the command message
         message.member.lastMessage.delete().catch(console.error);
@@ -124,6 +107,18 @@ client.on('message', message => {
         message.member.lastMessage.delete().catch(console.error)
     }
 });
+
+// Either returns the mentioned user if there is one or null
+// if there wasn't a user mentioned.
+function getMentionedUser(message) {
+    // Gets required user before message deletion
+    if (message.mentions.users.first()) {
+        var mentionedUser = message.mentions.users.first().id;
+        return mentionedUser;
+    } else {
+        return "";
+    }
+}
 
 /**
  * Adds new file if it doesn't exist and overwrites it if it does
