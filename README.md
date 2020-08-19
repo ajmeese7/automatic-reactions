@@ -36,11 +36,8 @@ Your prefix can be anything you want, but I tend to use the `/` because you're u
 
 ## Getting your login token
 
-0. Open either the web application or the installed Discord app
-1. Use the **CTRL+SHIFT+I** keyboard shortcut.
-2. This brings up the **Developer Tools**. Go to the **Application** tab
-3. On the left, expand **Local Storage**, then click on the discordapp.com entry (it should be the only one).
-4. Locate the entry called `token`, and copy it.
+Go to [this link](https://github.com/Tyrrrz/DiscordChatExporter/wiki/Troubleshooting#my-token-is-disappearing-too-quickly-i-cant-copy-it) and follow the instructions
+to get your login token.
 
 > **KEEP YOUR TOKEN SECRET, AND NEVER SHARE IT WITH ANYONE**
 
