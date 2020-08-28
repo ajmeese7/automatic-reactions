@@ -81,5 +81,21 @@ The current supported commands are the following:
 | channels | `user` - the user you want to change the channels for. | Only reacts to messages sent by the user in the specified channels. |
 | clear | n/a | Removes all the users and their reactions from the list to give you a fresh start. |
 
+### Examples
+- `/add @ajmeese7#4835 :heart: :eyes:`
+  - Will automatically react to ajmeese7 in any channel with the heart and eyes emojis
+- `/remove @ajmeeese7#4835`
+  - Clears all reactions from ajmeese7
+- `/channels @ajmeese7#4835 #general #bot-spam`
+  - Adds support for reactions in only the general and bot-spam channels
+  - NOTE: Must have the #, so the channel's ID can be extracted from the command
+- `/channels @ajmeese7#4835`
+  - Removes channel requirements, allowing automatic reactions in any channel
+- `/clear`
+  - Removes all reactions for all users, giving you a fresh start
+
 ## Feature wishlist
 - Add support for roles
+- Only allow command usage if the ID matches the user running the program
+  - ex. `if (message.author.id !== client.user.id || message.content.indexOf(client.config.prefix) !== 0) return;`
+- Try cutting out the JSON lib entirely and handle it in-house
