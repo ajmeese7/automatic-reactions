@@ -77,8 +77,8 @@ The current supported commands are the following:
 |---------|---------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | add | `user` - the user you want to be automatically reacted to. <br> `emojis` - as many emojis as you want to chain. At least one is required. | Creates and stores a JSON file with the emojis you want to react with and the user you want to react to. |
 | remove | `user` - the user you want to remove from the list. | Removes the specified user from the list and leaves the rest of the list untouched. |
+| channels | `user` - the user you want to change the channels for. | Only reacts to messages sent by the user in the specified channels. |
 | clear | n/a | Removes all the users and their reactions from the list to give you a fresh start. |
 
 ## Feature wishlist
 - Add support for roles
-- Add support for specific channels

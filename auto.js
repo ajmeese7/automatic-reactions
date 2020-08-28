@@ -1,6 +1,7 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 const config = require('./config.json');
+const fs = require('fs');
 var store = require('json-fs-store')();
 client.config = config;
 
@@ -8,86 +9,81 @@ client.once('ready', () => {
   console.log('Ready to react!');
 });
 
-// TODO: Make this cleaner, like an init function
-var userList;
-store.load("users", function(err, json) {
-  if (err) {
-    // Initialize for the first time
-    let users = {
-      id: "users",
-      users: []
-    }
+// Get the existing users from users.json, first initializing
+// the file if it does not yet exist.
+const getUserList = () => {
+  let fileName = "./store/users.json";
+  if (fs.existsSync(fileName)) return JSON.parse(fs.readFileSync(fileName)).users;
 
-    store.add(users, function(err) {
-      if (err) 
-        return console.error("Problem creating user storage:", err);
+  // Initialize for the first time
+  let users = { id: "users", users: [] }
+  store.add(users, (err) => {
+    if (err) return console.error("Problem creating user storage:", err);
 
-      console.log("Created user storage!");
-      store.load("users", function(err, json) {
-        if (err)
-          return console.error("Problem setting userList after creation:", err);
-          
-        console.log("Successfully set userList variable!");
-        userList = json.users;
-      });
-    });
-  } else {
-    console.log("Set userList successfully!");
-    userList = json.users;
-  }
-});
+    console.log("Initialized reaction file!");
+    getUserList();
+  });
+}
 
+var userList = getUserList();
 const prefix = config.prefix;
-client.on('message', message => {
+client.on('message', (message) => {
+  reactIfApplicable(message);
+
+  // If the prefix isn't present, nothing else is necessary since the
+  // reaction process has already been carried out.
+  let prefixIndex = message.content.substring(0, prefix.length);
+  if (prefixIndex != prefix) return;
+
+  // Deletes the command message
+  let mentionedUser = getMentionedUser(message);
+  message.member.lastMessage.delete().catch(console.error);
+  let userIndex = userList.findIndex( record => record.user === mentionedUser);
+
   const args = message.content.slice(prefix.length).trim().split(/ +/g);
   const command = args.shift().toLowerCase();
-  reactIfUserOnList(message);
+  if (command == "add") {
+      if (!mentionedUser) return console.log("Specify a user to add to the reaction list!");
+      if (args.length == 1)
+        return console.log(`${prefix}add doesn't work that way! You need to include at least one reaction.`);
 
-    if (command == "add") {
-        if (args.length == 1)
-          return console.log(`${prefix}add doesn't work that way! You need to include at least one reaction.`);
+      // Add the user and their reaction array to the userList
+      let reactionArray = generateReactionArray(args);
+      if (userIndex == -1) {
+        // Inserts the new user
+        let newUser = { user: mentionedUser, reactions: reactionArray, channels: [] }
+        userList.push(newUser);
+      } else {
+        // Update the current record instead of making a new one
+        let currentReactions = userList[userIndex].reactions;
+        userList[userIndex].reactions = currentReactions.concat(reactionArray);
+      }
 
-        // Deletes the command message
-        let mentionedUser = getMentionedUser(message);
-        message.member.lastMessage.delete().catch(console.error);
-        if (!mentionedUser) return console.log("Specify a user to add to the reaction list!");
+      updateUserList(userList);
+  } else if (command == "remove") {
+      if (!mentionedUser) return console.log("Specify a user to remove from the reaction list!");
 
-        let currentUserList;
-        store.load("users", function(err, json) {
-          if (err) return console.error("Problem loading user list:", err);
+      // Check if the user's records exist to be deleted
+      let userIndex = userList.findIndex( record => record.user === mentionedUser);
+      if (userIndex == -1) return console.log("That user is not on the reaction list!");
 
-          currentUserList = json.users;
-          let newUser = {
-            user: mentionedUser,
-            reactions: generateReactionArray(args)
-          }
+      // Deletes the applicable records and updates the list
+      userList.splice(userIndex, 1);
+      updateUserList(userList);
+  } else if (command == "channels") {
+      if (!mentionedUser) return console.log("Specify a user to add to the reaction list!");
 
-          // Add the user and their reaction array to the currentUserList
-          currentUserList.push(newUser);
-          updateUserList(currentUserList);
-        });
-    } else if (command == "remove") {
-        // Deletes the command message
-        let mentionedUser = getMentionedUser(message);
-        message.member.lastMessage.delete().catch(console.error);
-        if (!mentionedUser) return console.log("Specify a user to remove from the reaction list!");
+      // Removes the command from the args
+      args.shift();
 
-        let userNotFound = true;
-        for (let i = 0; i < userList.length; i++) {
-          if (userList[i].user == mentionedUser) {
-            userList.splice(i, 1);
-            updateUserList(userList);
-            userNotFound = false;
-            i--;
-          }
-        }
-
-        if (userNotFound) console.log("That user is not on the reaction list!");
-    } else if (command == "clear") {
-        let users = [];
-        updateUserList(users);
-        message.member.lastMessage.delete().catch(console.error)
-    }
+      // Switches from `<#channelID>` to `channelID`
+      let channels = args.map(channel => channel.substring(2, channel.length - 1));
+      userList[userIndex].channels = channels;
+      updateUserList(userList);
+  } else if (command == "clear") {
+      let users = [];
+      updateUserList(users);
+  }
 });
 
 /**
@@ -95,14 +91,20 @@ client.on('message', message => {
  * they are it reacts the reaction array in order to their message.
  * @param {object} message - the sent message object
  */
-function reactIfUserOnList(message) {
-  if (!userList) 
+function reactIfApplicable(message) {
+  // TODO: Make this not spaz out on the first run
+  if (!userList)
     return console.log("There is no user list! Did you delete a file while the program was running or something?");
     
   // Iterate over user list to see if user is on it
-  userList.forEach(async function (userData) {
+  userList.forEach(async (userData) => {
+      // Move on to next user if not a match
       let userId = userData.user;
       if (message.author.id != userId) return;
+
+      // If channels are specified and this channel doesn't fit, break
+      let channel = message.channel.id;
+      if (userData.channels.length != 0 && userData.channels.indexOf(channel) == -1) return;
       
       // Copied almost entirely from my multiple-reactions repository
       let reactions = userData.reactions;
@@ -116,19 +118,23 @@ function reactIfUserOnList(message) {
           // Discord native emoji or server/Nitro
           if (reactions[i].length < 8 || userReaction) {
             // https://discordjs.guide/popular-topics/reactions.html#reacting-in-order
-            await message.react(reactions[i]).catch(function(err) {
+            await message.react(reactions[i]).catch(err => {
               console.log("The last message that user sent was deleted! Cannot react...");
               breakLoop = true;
             });
           } else {
+            // TODO: Clean up this code
             console.log("Emoji not available on server or your client..."); 
           }
       }
   });
 }
 
-// Either returns the mentioned user if there is one or null
-// if there wasn't a user mentioned.
+/**
+ * Either returns the mentioned user if there is one or null
+ * if there wasn't a user mentioned.
+ * @param {object} message - the sent message object
+ */
 function getMentionedUser(message) {
   // Gets required user before message deletion
   if (message.mentions.users.first()) {
@@ -145,19 +151,15 @@ function getMentionedUser(message) {
  * @param {array} newUserArray - list of user IDs to send to file
  */
 function updateUserList(newUserArray) {
-  let newUserList = {
-    id: "users",
-    users: newUserArray
-  }
+  let newUserList = { id: "users", users: newUserArray }
 
-  store.add(newUserList, function(err) {
+  store.add(newUserList, (err) => {
     if (err) return console.error("Problem adding new user:", err);
     
     console.log("Successfully modified reaction list!");
     userList = newUserArray;
   });
 }
-
 
 /**
  * Iterates over arguments passed and turns that into a list of
@@ -167,11 +169,11 @@ function updateUserList(newUserArray) {
  */
 function generateReactionArray(args) {
   // Get reactions from arguments after `/set {commandName}`
+  args.shift();
   let reactionArray = [];
-  for (i = 1; i < args.length; i++) {
+  for (i = 0; i < args.length; i++) {
     // Gets the ID, not just the emoji
     let emojiCode = "\\" + args[i];
-    
     if (emojiCode.indexOf(':') != -1) {
       // Gets the emoji ID of custom emojis
       console.log("Gathering custom emoji ID...");
@@ -182,8 +184,7 @@ function generateReactionArray(args) {
       emojiCode = args[i];
     }
 
-    // [i-1] to ignore the commandName and start at 0 for reactions
-    reactionArray[i-1] = emojiCode;
+    reactionArray[i] = emojiCode;
   }
 
   return reactionArray;
