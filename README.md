@@ -1,12 +1,6 @@
-# automatic-reactions
-
 <p align="center">
-  <img alt="Automatic reaction usage GIF" src="https://user-images.githubusercontent.com/17814535/75614332-56efc000-5afd-11ea-8b2b-3f2c49ece2be.gif">
-
-  <h3 align="center">😎Automatic Reactions😎</h3>
+  <h1 align="center">😎Automatic Reactions😎</h1>
 </p>
-
-----
 
 <p align="center">
    <img src="https://img.shields.io/badge/language-javascript-blue?color=FF69B4"/>
@@ -14,6 +8,10 @@
    <img src="https://img.shields.io/github/stars/ajmeese7/automatic-reactions"/>
    <img src="https://img.shields.io/github/forks/ajmeese7/automatic-reactions"/>
    <img src="https://img.shields.io/static/v1?label=%F0%9F%8C%9F&message=If%20Useful&style=style=flat&color=BC4E99" alt="Star Badge"/>
+</p>
+
+<p align="center">
+  <img alt="Automatic reaction usage GIF" src="https://user-images.githubusercontent.com/17814535/75614332-56efc000-5afd-11ea-8b2b-3f2c49ece2be.gif">
 </p>
 
 If you want to be *that* guy, you can now be *that* guy.
