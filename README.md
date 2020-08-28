@@ -34,8 +34,9 @@ In a command prompt in your projects folder (wherever that may be), run the foll
 
 `git clone https://github.com/ajmeese7/automatic-reactions`
 
-Also note that this will not work if you are running `discord.js>=11.6.3`. 
-To install the last version of discord.js that selfbots work on, run the following in command prompt:
+Also note that this will not work if you are running `discord.js>=11.6.3`. This project will install
+a working version of Discord.js by default, but if you are still having any issues you can run the
+below command:
 
 `npm install discord.js@11.6.2`
 
