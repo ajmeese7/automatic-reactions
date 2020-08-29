@@ -1,47 +1,47 @@
+// Unchanging variables
 const Discord = require('discord.js');
 const client = new Discord.Client();
-const config = require('./config.json');
 const fs = require('fs');
-var store = require('json-fs-store')();
-client.config = config;
+const fileName = "./store/users.json";
 
-client.once('ready', () => {
-  console.log('Ready to react!');
-});
+// Bot config
+const config = require('./config.json');
+const prefix = config.prefix;
+client.config = config;
+client.once('ready', () => console.log('Ready to react!'));
 
 // Get the existing users from users.json, first initializing
 // the file if it does not yet exist.
 const getUserList = () => {
-  let fileName = "./store/users.json";
-  if (fs.existsSync(fileName)) return JSON.parse(fs.readFileSync(fileName)).users;
+  if (fs.existsSync(fileName))
+    return JSON.parse(fs.readFileSync(fileName)).users;
 
   // Initialize for the first time
   let users = { id: "users", users: [] }
-  store.add(users, (err) => {
-    if (err) return console.error("Problem creating user storage:", err);
-
-    console.log("Initialized reaction file!");
-    getUserList();
-  });
+  fs.writeFileSync(fileName, JSON.stringify(users));
+  return getUserList();
 }
 
 var userList = getUserList();
-const prefix = config.prefix;
 client.on('message', (message) => {
   reactIfApplicable(message);
 
   // If the prefix isn't present, nothing else is necessary since the
   // reaction process has already been carried out.
   let prefixIndex = message.content.substring(0, prefix.length);
+  if (message.author.id !== client.user.id) return;
   if (prefixIndex != prefix) return;
 
   // Deletes the command message
   let mentionedUser = getMentionedUser(message);
   message.member.lastMessage.delete().catch(console.error);
-  let userIndex = userList.findIndex( record => record.user === mentionedUser);
 
+  // Index is -1 if the userList doesn't exist, so the program won't
+  // error out if no reactions have been defined yet.
+  let userIndex = userList ? userList.findIndex( record => record.user === mentionedUser) : -1;
   const args = message.content.slice(prefix.length).trim().split(/ +/g);
   const command = args.shift().toLowerCase();
+
   if (command == "add") {
       if (!mentionedUser) return console.log("Specify a user to add to the reaction list!");
       if (args.length == 1)
@@ -92,41 +92,39 @@ client.on('message', (message) => {
  * @param {object} message - the sent message object
  */
 function reactIfApplicable(message) {
-  // TODO: Make this not spaz out on the first run
-  if (!userList)
-    return console.log("There is no user list! Did you delete a file while the program was running or something?");
-    
+  if (!userList) return;
+
   // Iterate over user list to see if user is on it
   userList.forEach(async (userData) => {
-      // Move on to next user if not a match
-      let userId = userData.user;
-      if (message.author.id != userId) return;
+    // Move on to next user if not a match
+    let userId = userData.user;
+    if (message.author.id != userId) return;
 
-      // If channels are specified and this channel doesn't fit, break
-      let channel = message.channel.id;
-      if (userData.channels.length != 0 && userData.channels.indexOf(channel) == -1) return;
-      
-      // Copied almost entirely from my multiple-reactions repository
-      let reactions = userData.reactions;
-      let breakLoop = false;
+    // If channels are specified and this channel doesn't fit, break
+    let channel = message.channel.id;
+    if (userData.channels.length != 0 && userData.channels.indexOf(channel) == -1) return;
+    
+    // Copied almost entirely from my multiple-reactions repository
+    let reactions = userData.reactions;
+    let breakLoop = false;
 
-      // Iterate over reaction array to add all reactions in order
-      for (let i = 0; i < reactions.length; i++) {
-          if (breakLoop) break;
-          let userReaction = client.emojis.get(reactions[i]);
-          
-          // Discord native emoji or server/Nitro
-          if (reactions[i].length < 8 || userReaction) {
-            // https://discordjs.guide/popular-topics/reactions.html#reacting-in-order
-            await message.react(reactions[i]).catch(err => {
-              console.log("The last message that user sent was deleted! Cannot react...");
-              breakLoop = true;
-            });
-          } else {
-            // TODO: Clean up this code
-            console.log("Emoji not available on server or your client..."); 
-          }
-      }
+    // Iterate over reaction array to add all reactions in order
+    for (let i = 0; i < reactions.length; i++) {
+        if (breakLoop) break;
+        let userReaction = client.emojis.get(reactions[i]);
+        
+        // Discord native emoji or server/Nitro
+        if (reactions[i].length < 8 || userReaction) {
+          // https://discordjs.guide/popular-topics/reactions.html#reacting-in-order
+          await message.react(reactions[i]).catch(err => {
+            console.log("The last message that user sent was deleted! Cannot react...");
+            breakLoop = true;
+          });
+        } else {
+          // TODO: Clean up this code
+          console.log("Emoji not available on server or your client..."); 
+        }
+    }
   });
 }
 
@@ -137,12 +135,8 @@ function reactIfApplicable(message) {
  */
 function getMentionedUser(message) {
   // Gets required user before message deletion
-  if (message.mentions.users.first()) {
-    let mentionedUser = message.mentions.users.first().id;
-    return mentionedUser;
-  }
-
-  return "";
+  let mentionedUser = message.mentions.users.first();
+  return mentionedUser ? mentionedUser.id : "";
 }
 
 /**
@@ -152,13 +146,9 @@ function getMentionedUser(message) {
  */
 function updateUserList(newUserArray) {
   let newUserList = { id: "users", users: newUserArray }
-
-  store.add(newUserList, (err) => {
-    if (err) return console.error("Problem adding new user:", err);
-    
-    console.log("Successfully modified reaction list!");
-    userList = newUserArray;
-  });
+  fs.writeFileSync(fileName, JSON.stringify(newUserList));
+  console.log("Successfully modified reaction list!");
+  userList = newUserArray;
 }
 
 /**

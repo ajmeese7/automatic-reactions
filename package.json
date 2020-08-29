@@ -10,8 +10,6 @@
   "author": "Aaron Meese",
   "license": "MIT",
   "dependencies": {
-    "discord.js": "11.6.2",
-    "json-fs-store": "^1.0.1",
-    "node-persist": "2.1.0"
+    "discord.js": "11.6.2"
   }
 }

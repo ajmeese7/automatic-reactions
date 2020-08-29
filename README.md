@@ -94,6 +94,3 @@ The current supported commands are the following:
 
 ## Feature wishlist
 - Add support for roles
-- Only allow command usage if the ID matches the user running the program
-  - ex. `if (message.author.id !== client.user.id || message.content.indexOf(client.config.prefix) !== 0) return;`
-- Try cutting out the JSON lib entirely and handle it in-house
