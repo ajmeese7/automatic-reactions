@@ -52,7 +52,7 @@ Once finished:
 
 - Ensure you have NodeJS installed on your PC by running `npm`. If not, Google how to install it and do that now
 - Download the repository, unzip it, and run `npm install` from a terminal in the project folder
-- Edit `config.json` and enter your token and desired prefix. It should look like this afterwards:
+- Create `config.json` and enter your token and desired prefix. It should look like this afterwards:
 
 ```json
 {
