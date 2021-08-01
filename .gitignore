@@ -1,8 +1,5 @@
 # Node
 node_modules/
 
-# Personal information
-config\.json
-
 # User's saved commands
-/store
+/store/reactions.json

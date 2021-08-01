@@ -52,7 +52,7 @@ Once finished:
 
 - Ensure you have NodeJS installed on your PC by running `npm`. If not, Google how to install it and do that now
 - Download the repository, unzip it, and run `npm install` from a terminal in the project folder
-- Create `config.json` and enter your token and desired prefix. It should look like this afterwards:
+- Edit `config.json` and enter your token and desired prefix. It should look like this afterwards:
 
 ```json
 {
@@ -60,8 +60,6 @@ Once finished:
   "prefix": "YOUR_DESIRED_PREFIX_HERE"
 }
 ```
-
-Your prefix can be anything you want, but I tend to use the `/` because you're unlikely to ever use it on accident.
 
 ## Getting your login token
 
@@ -87,19 +85,22 @@ The current supported commands are the following:
 | add | `user` - the user you want to be automatically reacted to. <br> `emojis` - as many emojis as you want to chain. At least one is required. | Creates and stores a JSON file with the emojis you want to react with and the user you want to react to. |
 | remove | `user` - the user you want to remove from the list. | Removes the specified user from the list and leaves the rest of the list untouched. |
 | channels | `user` - the user you want to change the channels for. | Only reacts to messages sent by the user in the specified channels. |
+| autochannels | `channels` - the channels you want to automatically react in regardless of who sends the message. <br> `emojis` - as many emojis as you want to chain. At least one is required.  | Only reacts to messages sent by the user in the specified channels. |
 | clear | n/a | Removes all the users and their reactions from the list to give you a fresh start. |
 
 ### Examples
-- `/add @ajmeese7#4835 :heart: :eyes:`
+- `!add @ajmeese7#4835 :heart: :eyes:`
   - Will automatically react to ajmeese7 in any channel with the heart and eyes emojis
-- `/remove @ajmeeese7#4835`
+- `!remove @ajmeeese7#4835`
   - Clears all reactions from ajmeese7
-- `/channels @ajmeese7#4835 #general #bot-spam`
+- `!channels @ajmeese7#4835 #general #bot-spam`
   - Adds support for reactions in only the general and bot-spam channels
   - NOTE: Must have the #, so the channel's ID can be extracted from the command
-- `/channels @ajmeese7#4835`
+- `!channels @ajmeese7#4835`
   - Removes channel requirements, allowing automatic reactions in any channel
-- `/clear`
+- `!autochannels #general #bot-spam :heart: :eyes:`
+  - Adds support for reactions in the general and bot-spam channels for **any** user
+- `!clear`
   - Removes all reactions for all users, giving you a fresh start
 
 ## Feature wishlist

@@ -2,7 +2,7 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 const fs = require('fs');
-const fileName = "./store/users.json";
+const fileName = "./store/reactions.json";
 
 // Bot config
 const config = require('./config.json');
@@ -10,35 +10,36 @@ const prefix = config.prefix;
 client.config = config;
 client.once('ready', () => console.log('Ready to react!'));
 
-// Get the existing users from users.json, first initializing
+// Get the existing data from reactions.json, first initializing
 // the file if it does not yet exist.
-const getUserList = () => {
+const getReactionList = () => {
   if (fs.existsSync(fileName))
-    return JSON.parse(fs.readFileSync(fileName)).users;
+    return JSON.parse(fs.readFileSync(fileName));
 
   // Initialize for the first time
-  let users = { id: "users", users: [] }
-  fs.writeFileSync(fileName, JSON.stringify(users));
-  return getUserList();
+  const reactions = { users: [], channels: [] }
+  fs.writeFileSync(fileName, JSON.stringify(reactions));
+  return getReactionList();
 }
 
-var userList = getUserList();
+var reactionList = getReactionList();
 client.on('message', (message) => {
   reactIfApplicable(message);
 
   // If the prefix isn't present, nothing else is necessary since the
   // reaction process has already been carried out.
-  let prefixIndex = message.content.substring(0, prefix.length);
+  const prefixIndex = message.content.substring(0, prefix.length);
   if (message.author.id !== client.user.id) return;
   if (prefixIndex != prefix) return;
 
   // Deletes the command message
-  let mentionedUser = getMentionedUser(message);
+  const mentionedUser = getMentionedUser(message);
   message.member.lastMessage.delete().catch(console.error);
 
-  // Index is -1 if the userList doesn't exist, so the program won't
-  // error out if no reactions have been defined yet.
-  let userIndex = userList ? userList.findIndex( record => record.user === mentionedUser) : -1;
+  const userIndex = reactionList ? reactionList.users.findIndex( record => record.user === mentionedUser) : -1;
+  const channelID = message.channel.id;
+  const channelIndex = reactionList ? reactionList.channels.findIndex( record => record.channelID === channelID) : -1;
+  
   const args = message.content.slice(prefix.length).trim().split(/ +/g);
   const command = args.shift().toLowerCase();
 
@@ -47,29 +48,29 @@ client.on('message', (message) => {
       if (args.length == 1)
         return console.log(`${prefix}add doesn't work that way! You need to include at least one reaction.`);
 
-      // Add the user and their reaction array to the userList
+      // Add the user and their reaction array to the reactionList
+      args.shift();
       let reactionArray = generateReactionArray(args);
       if (userIndex == -1) {
         // Inserts the new user
-        let newUser = { user: mentionedUser, reactions: reactionArray, channels: [] }
-        userList.push(newUser);
+        const newUser = { user: mentionedUser, reactions: reactionArray, channels: [] }
+        reactionList.users.push(newUser);
       } else {
         // Update the current record instead of making a new one
-        let currentReactions = userList[userIndex].reactions;
-        userList[userIndex].reactions = currentReactions.concat(reactionArray);
+        const currentReactions = reactionList.users[userIndex].reactions;
+        reactionList.users[userIndex].reactions = currentReactions.concat(reactionArray);
       }
 
-      updateUserList(userList);
+      updateReactionList(reactionList);
   } else if (command == "remove") {
       if (!mentionedUser) return console.log("Specify a user to remove from the reaction list!");
 
       // Check if the user's records exist to be deleted
-      let userIndex = userList.findIndex( record => record.user === mentionedUser);
       if (userIndex == -1) return console.log("That user is not on the reaction list!");
 
       // Deletes the applicable records and updates the list
-      userList.splice(userIndex, 1);
-      updateUserList(userList);
+      reactionList.users.splice(userIndex, 1);
+      updateReactionList(reactionList);
   } else if (command == "channels") {
       if (!mentionedUser) return console.log("Specify a user to add to the reaction list!");
 
@@ -77,55 +78,74 @@ client.on('message', (message) => {
       args.shift();
 
       // Switches from `<#channelID>` to `channelID`
-      let channels = args.map(channel => channel.substring(2, channel.length - 1));
-      userList[userIndex].channels = channels;
-      updateUserList(userList);
+      const channels = args.map(channel => channel.substring(2, channel.length - 1));
+      reactionList[userIndex].channels = channels;
+      updateReactionList(reactionList);
+  } else if (command == "autochannels") {
+      const channels = args.filter(arg => arg.includes('#'));
+      const reactionArray = generateReactionArray(args.filter(arg => !arg.includes('#')));
+      channels.forEach(channel => {
+        if (channelIndex == -1) {
+          // Inserts the new channel
+          const newChannel = {
+            // Switches from `<#channelID>` to `channelID`
+            channelID: channel.substring(2, channel.length - 1),
+            reactions: reactionArray
+          };
+          reactionList.channels.push(newChannel);
+        } else {
+          // Update the current record instead of making a new one
+          const currentReactions = reactionList.channels[channelIndex].reactions;
+          reactionList.channels[channelIndex].reactions = currentReactions.concat(reactionArray);
+        }
+      });
+      
+      updateReactionList(reactionList);
   } else if (command == "clear") {
-      let users = [];
-      updateUserList(users);
+      updateReactionList([]);
   }
 });
 
 /**
- * Goes over the user list to see if the author is on it, and if
- * they are it reacts the reaction array in order to their message.
+ * Goes over the reaction list to see if the author is on it or if the message
+ * is in an automatic channel, and if they are it reacts the reaction array in 
+ * order to the matching message.
  * @param {object} message - the sent message object
  */
-function reactIfApplicable(message) {
-  if (!userList) return;
+async function reactIfApplicable(message) {
+  if (!reactionList) return;
+  const channelID = message.channel.id;
+  const channelIndex = reactionList.channels.findIndex( record => record.channelID === channelID);
+  var reactions = [];
 
-  // Iterate over user list to see if user is on it
-  userList.forEach(async (userData) => {
-    // Move on to next user if not a match
-    let userId = userData.user;
-    if (message.author.id != userId) return;
+  if (channelIndex != -1) {
+    reactions = reactionList.channels[channelIndex].reactions;
+  } else {
+    const userID = message.author.id;
+    const userIndex = reactionList.users.findIndex( record => record.user === userID);
+    if (userIndex == -1) return;
+    const user = reactionList.users[userIndex];
+    if (user.channels.length != 0 && user.channels.indexOf(channel) == -1) return;
+    reactions = user.reactions;
+  }
 
-    // If channels are specified and this channel doesn't fit, break
-    let channel = message.channel.id;
-    if (userData.channels.length != 0 && userData.channels.indexOf(channel) == -1) return;
-    
-    // Copied almost entirely from my multiple-reactions repository
-    let reactions = userData.reactions;
-    let breakLoop = false;
-
-    // Iterate over reaction array to add all reactions in order
-    for (let i = 0; i < reactions.length; i++) {
-        if (breakLoop) break;
-        let userReaction = client.emojis.get(reactions[i]);
-        
-        // Discord native emoji or server/Nitro
-        if (reactions[i].length < 8 || userReaction) {
-          // https://discordjs.guide/popular-topics/reactions.html#reacting-in-order
-          await message.react(reactions[i]).catch(err => {
-            console.log("The last message that user sent was deleted! Cannot react...");
-            breakLoop = true;
-          });
-        } else {
-          // TODO: Clean up this code
-          console.log("Emoji not available on server or your client..."); 
-        }
-    }
-  });
+  // Iterate over reaction array to add all reactions in order
+  let breakLoop = false;
+  for (let i = 0; i < reactions.length; i++) {
+      if (breakLoop) break;
+      let userReaction = client.emojis.get(reactions[i]);
+      
+      // Discord native emoji or server/Nitro
+      if (reactions[i].length < 8 || userReaction) {
+        // https://discordjs.guide/popular-topics/reactions.html#reacting-in-order
+        await message.react(reactions[i]).catch(err => {
+          console.log("The last message that user sent was deleted! Cannot react...");
+          breakLoop = true;
+        });
+      } else {
+        console.log("Emoji not available on server or your client..."); 
+      }
+  }
 }
 
 /**
@@ -135,20 +155,19 @@ function reactIfApplicable(message) {
  */
 function getMentionedUser(message) {
   // Gets required user before message deletion
-  let mentionedUser = message.mentions.users.first();
+  const mentionedUser = message.mentions.users.first();
   return mentionedUser ? mentionedUser.id : "";
 }
 
 /**
  * Adds new file if it doesn't exist and overwrites it if it does
  * with the new list of users to react to.
- * @param {array} newUserArray - list of user IDs to send to file
+ * @param {array} newReactionArray - list of users and channels to be reacted to
  */
-function updateUserList(newUserArray) {
-  let newUserList = { id: "users", users: newUserArray }
-  fs.writeFileSync(fileName, JSON.stringify(newUserList));
+function updateReactionList(newReactionArray) {
+  fs.writeFileSync(fileName, JSON.stringify(newReactionArray));
   console.log("Successfully modified reaction list!");
-  userList = newUserArray;
+  reactionList = newReactionArray;
 }
 
 /**
@@ -158,8 +177,6 @@ function updateUserList(newUserArray) {
  * @returns {array} array of reaction emojis
  */
 function generateReactionArray(args) {
-  // Get reactions from arguments after `/set {commandName}`
-  args.shift();
   let reactionArray = [];
   for (i = 0; i < args.length; i++) {
     // Gets the ID, not just the emoji
