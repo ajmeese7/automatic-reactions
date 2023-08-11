@@ -1,14 +1,14 @@
 // Unchanging variables
-const Discord = require('discord.js');
+const Discord = require("discord.js");
 const client = new Discord.Client();
-const fs = require('fs');
+const fs = require("fs");
 const fileName = "./store/reactions.json";
 
 // Bot config
-const config = require('./config.json');
+const config = require("./config.json");
 const prefix = config.prefix;
 client.config = config;
-client.once('ready', () => console.log('Ready to react!'));
+client.once("ready", () => console.log("Ready to react!"));
 
 // Get the existing data from reactions.json, first initializing
 // the file if it does not yet exist.
@@ -23,7 +23,7 @@ const getReactionList = () => {
 }
 
 var reactionList = getReactionList();
-client.on('message', (message) => {
+client.on("message", (message) => {
   reactIfApplicable(message);
 
   // If the prefix isn't present, nothing else is necessary since the

@@ -1,6 +1,6 @@
 {
   "name": "automatic-reactions",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Discord react to every message a user sends.",
   "repository": {
     "type": "git",

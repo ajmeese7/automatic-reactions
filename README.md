@@ -42,17 +42,11 @@ In a command prompt in your projects folder (wherever that may be), run the foll
 
 `git clone https://github.com/ajmeese7/automatic-reactions`
 
-Also note that this will not work if you are running `discord.js>=11.6.3`. This project will install
-a working version of Discord.js by default, but if you are still having any issues you can run the
-below command:
-
-`npm install discord.js@11.6.2`
-
 Once finished:
 
 - Ensure you have NodeJS installed on your PC by running `npm`. If not, Google how to install it and do that now
 - Download the repository, unzip it, and run `npm install` from a terminal in the project folder
-- Edit `config.json` and enter your token and desired prefix. It should look like this afterwards:
+- Edit `config.json` and enter *your* token and desired prefix. It should look like this afterwards:
 
 ```json
 {
@@ -61,9 +55,15 @@ Once finished:
 }
 ```
 
+**NOTE**: This will not work if you are running `discord.js>=11.6.3`. This project will install
+a working version of Discord.js by default, but if you are still having any issues you can try running the
+following command:
+
+`npm install discord.js@11.6.2`
+
 ## Getting your login token
 
-Go to [this link](https://github.com/Tyrrrz/DiscordChatExporter/wiki/Troubleshooting#my-token-is-disappearing-too-quickly-i-cant-copy-it) and follow the instructions
+Go to [this link](https://github.com/Tyrrrz/DiscordChatExporter/blob/master/.docs/Token-and-IDs.md) and follow the instructions
 to get your login token.
 
 > **KEEP YOUR TOKEN SECRET, AND NEVER SHARE IT WITH ANYONE**
@@ -72,9 +72,9 @@ to get your login token.
 
 To start the bot, open a command prompt from the folder containing the repository and run:
 
- `node auto`
+`node auto`
 
- To stop it, click on the terminal and press **CTRL+C**, which will kill the process. Clicking the big red x works just as well.
+To stop it, click on the terminal and press **CTRL+C**, which will kill the process. Clicking the big red x works just as well.
 
 ## Commands
 
@@ -89,6 +89,8 @@ The current supported commands are the following:
 | clear | n/a | Removes all the users and their reactions from the list to give you a fresh start. |
 
 ### Examples
+These examples demonstrate the usage if your prefix is `!`:
+
 - `!add @ajmeese7#4835 :heart: :eyes:`
   - Will automatically react to ajmeese7 in any channel with the heart and eyes emojis
 - `!remove @ajmeeese7#4835`
